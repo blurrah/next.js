@@ -1,17 +1,17 @@
-import type { NextConfig } from './config'
 import { VALID_LOADERS } from '../shared/lib/image-config'
+import type { NextConfig } from './config'
 
-import { z } from 'next/dist/compiled/zod'
 import type zod from 'next/dist/compiled/zod'
+import { z } from 'next/dist/compiled/zod'
 
 import type { SizeLimit } from '../../types'
-import type { ExportPathMap, TurboLoaderItem, TurboRule } from './config-shared'
 import type {
   Header,
+  Redirect,
   Rewrite,
   RouteHas,
-  Redirect,
 } from '../lib/load-custom-routes'
+import type { ExportPathMap, TurboLoaderItem, TurboRule } from './config-shared'
 
 // A custom zod schema for the SizeLimit type
 const zSizeLimit = z.custom<SizeLimit>((val) => {
@@ -357,12 +357,6 @@ export const configSchema: zod.ZodType<NextConfig> = z.lazy(() =>
             memoryLimit: z.number().int().optional(),
           })
           .optional(),
-        logging: z
-          .object({
-            level: z.literal('verbose').optional(),
-            fullUrl: z.boolean().optional(),
-          })
-          .optional(),
         serverMinification: z.boolean().optional(),
         serverSourceMaps: z.boolean().optional(),
         bundlePagesExternals: z.boolean().optional(),
@@ -456,6 +450,11 @@ export const configSchema: zod.ZodType<NextConfig> = z.lazy(() =>
         loaderFile: z.string().optional(),
         minimumCacheTTL: z.number().int().gte(0).optional(),
         path: z.string().optional(),
+      })
+      .optional(),
+    logging: z
+      .object({
+        fullUrl: z.boolean().optional(),
       })
       .optional(),
     modularizeImports: z
