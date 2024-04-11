@@ -1,16 +1,16 @@
-import type { CacheFs } from '../../../shared/lib/utils'
 import type { PrerenderManifest } from '../../../build'
+import type { CacheFs } from '../../../shared/lib/utils'
 import type {
-  IncrementalCacheValue,
   IncrementalCacheEntry,
-  IncrementalCache as IncrementalCacheType,
   IncrementalCacheKindHint,
+  IncrementalCache as IncrementalCacheType,
+  IncrementalCacheValue,
 } from '../../response-cache'
 
-import FetchCache from './fetch-cache'
-import FileSystemCache from './file-system-cache'
 import path from '../../../shared/lib/isomorphic/path'
 import { normalizePagePath } from '../../../shared/lib/page-path/normalize-page-path'
+import FetchCache from './fetch-cache'
+import FileSystemCache from './file-system-cache'
 
 import {
   CACHE_ONE_YEAR,
@@ -380,14 +380,31 @@ export class IncrementalCache implements IncrementalCacheType {
       }
     }
 
+    // these headers are unique per request but not relevant to the cached value
+    // e.g. otel's distributed tracing header `traceparent`
+    const filteredHeaders = new Set(['traceparent'])
+
+    const headers =
+      typeof (init.headers || {}).keys === 'function'
+        ? Object.fromEntries(init.headers as Headers)
+        : init.headers
+
+    const cacheHeaders: HeadersInit = {}
+    if (headers) {
+      for (const [header, value] of Object.entries(headers)) {
+        if (filteredHeaders.has(header.toLowerCase())) {
+          continue
+        }
+        cacheHeaders[header] = value
+      }
+    }
+
     const cacheString = JSON.stringify([
       MAIN_KEY_PREFIX,
       this.fetchCacheKeyPrefix || '',
       url,
       init.method,
-      typeof (init.headers || {}).keys === 'function'
-        ? Object.fromEntries(init.headers as Headers)
-        : init.headers,
+      cacheHeaders,
       init.mode,
       init.redirect,
       init.credentials,
