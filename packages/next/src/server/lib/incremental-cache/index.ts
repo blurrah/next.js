@@ -354,7 +354,10 @@ export class IncrementalCache implements IncrementalCacheType {
         ? Object.fromEntries(init.headers as Headers)
         : Object.assign({}, init.headers)
 
+    // otel headers can break request caching and deduplication
+    // so we remove them from the cache key
     if ('traceparent' in headers) delete headers['traceparent']
+    if ('tracestate' in headers) delete headers['tracestate']
 
     const cacheString = JSON.stringify([
       MAIN_KEY_PREFIX,
